@@ -115,24 +115,35 @@ install_app() { pull_image; exists && docker rm -f "$APP_NAME" >/dev/null 2>&1 |
 
 install_shortcut() {
     local target="/usr/local/bin/bvservere"
-    local shortcut="/usr/local/bin/$SHORTCUT_KEY"
-    [ "$(id -u)" -eq 0 ] || { error "安装快捷键需要 root 权限，请使用 sudo 运行。"; return 1; }
-    local source="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-    if [[ "$source" == /dev/fd/* || ! -f "$source" ]]; then
-        info "当前通过 curl 运行，无法自动创建持久快捷键。"
-        info "请先下载脚本后运行：curl -fsSL https://raw.githubusercontent.com/kejiland/bvservere/main/install-bvservere.sh -o /usr/local/bin/bvservere"
-        info "然后执行：chmod +x /usr/local/bin/bvservere"
-        return 0
+    local shortcut="${1:-b}"
+    [ "$(id -u)" -eq 0 ] || { error "设置快捷键需要 root 权限，请使用 sudo 运行。"; return 1; }
+    if [[ ! "$shortcut" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        error "快捷键只能包含字母、数字、下划线或短横线。"
+        return 1
     fi
-    cp "$source" "$target"
+    cat > "$target" <<'EOF'
+#!/usr/bin/env bash
+exec bash -c "$(curl -fsSL https://raw.githubusercontent.com/kejiland/bvservere/main/install-bvservere.sh)" -- "$@"
+EOF
     chmod 755 "$target"
-    info "快捷键已安装：输入 bvservere 即可启动管理菜单。"
+    ln -sfn "$target" "/usr/local/bin/$shortcut"
+    info "快捷键已设置：$shortcut"
+    info "以后在任意目录输入 $shortcut 即可进入菜单。"
 }
-show_menu() { clear 2>/dev/null || true; echo "======================================"; echo "       bvservere 一键管理脚本"; echo "======================================"; echo "镜像：$IMAGE"; echo "数据目录：$DATA_DIR"; echo; echo "1. 安装 / 更新"; echo "2. 启动"; echo "3. 停止"; echo "4. 重启"; echo "5. 查看状态"; echo "6. 查看日志"; echo "7. 查看访问信息"; echo "8. 删除容器（保留数据）"; echo "0. 退出"; echo; echo "快捷键：$SHORTCUT_KEY  启动/进入此管理脚本"; echo "======================================"; echo "可通过 SHORTCUT_KEY 自定义快捷键，默认：b"; }
-run_menu() { while true; do show_menu; printf "请输入选项 [0-8]："; read -r choice </dev/tty || exit 1; echo; case "$choice" in 1) check_docker; install_app; install_shortcut;; 2) check_docker; exists && docker start "$APP_NAME" >/dev/null && info "启动成功" || error "容器不存在，请先选择 1 安装";; 3) check_docker; running && docker stop "$APP_NAME" >/dev/null || true; info "已停止";; 4) check_docker; exists && docker restart "$APP_NAME" >/dev/null && info "重启成功" || error "容器不存在，请先选择 1 安装";; 5) check_docker; docker ps -a --filter "name=^/${APP_NAME}$";; 6) check_docker; exists && docker logs -tf --tail 30 "$APP_NAME" || error "容器不存在";; 7) show_access_info; echo; printf "按回车键返回菜单..."; read -r _ </dev/tty;; 8) check_docker; exists && docker rm -f "$APP_NAME" >/dev/null || true; info "容器已删除，数据仍保留在：$DATA_DIR";; 0) exit 0;; *) error "无效选项";; esac; if [ "$choice" != 7 ]; then echo; printf "按回车键返回菜单..."; read -r _ </dev/tty; fi; done; }
+
+set_shortcut() {
+    local shortcut
+    printf "请输入快捷键名称（直接回车使用 b）："
+    read -r shortcut </dev/tty || return 1
+    shortcut="${shortcut:-b}"
+    install_shortcut "$shortcut"
+}
+show_menu() { clear 2>/dev/null || true; echo "======================================"; echo "       bvservere 一键管理脚本"; echo "======================================"; echo "镜像：$IMAGE"; echo "数据目录：$DATA_DIR"; echo; echo "1. 安装 / 更新"; echo "2. 启动"; echo "3. 停止"; echo "4. 重启"; echo "5. 查看状态"; echo "6. 查看日志"; echo "7. 查看访问信息"; echo "8. 设置快捷键"; echo "9. 删除容器（保留数据）"; echo "0. 退出"; echo; echo "快捷键：$SHORTCUT_KEY  启动/进入此管理脚本"; echo "======================================"; echo "可通过 SHORTCUT_KEY 自定义快捷键，默认：b"; }
+run_menu() { while true; do show_menu; printf "请输入选项 [0-9]："; read -r choice </dev/tty || exit 1; echo; case "$choice" in 1) check_docker; install_app; install_shortcut;; 2) check_docker; exists && docker start "$APP_NAME" >/dev/null && info "启动成功" || error "容器不存在，请先选择 1 安装";; 3) check_docker; running && docker stop "$APP_NAME" >/dev/null || true; info "已停止";; 4) check_docker; exists && docker restart "$APP_NAME" >/dev/null && info "重启成功" || error "容器不存在，请先选择 1 安装";; 5) check_docker; docker ps -a --filter "name=^/${APP_NAME}$";; 6) check_docker; exists && docker logs -tf --tail 30 "$APP_NAME" || error "容器不存在";; 7) show_access_info; echo; printf "按回车键返回菜单..."; read -r _ </dev/tty;; 8) set_shortcut;; 9) check_docker; exists && docker rm -f "$APP_NAME" >/dev/null || true; info "容器已删除，数据仍保留在：$DATA_DIR";; 0) exit 0;; *) error "无效选项";; esac; if [ "$choice" != 7 ]; then echo; printf "按回车键返回菜单..."; read -r _ </dev/tty; fi; done; }
 
 check_docker
 run_menu
+
 
 
 
