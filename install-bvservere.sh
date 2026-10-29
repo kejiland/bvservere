@@ -9,9 +9,52 @@ DATA_DIR="${DATA_DIR:-/opt/bvservere}"
 info() { echo "[INFO] $*"; }
 error() { echo "[ERROR] $*" >&2; }
 
+install_docker() {
+    if [ "$(id -u)" -ne 0 ]; then
+        error "自动安装 Docker 需要 root 权限，请使用 sudo 运行脚本。"
+        exit 1
+    fi
+
+    info "正在安装 Docker..."
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get update
+        apt-get install -y docker.io
+        systemctl enable --now docker 2>/dev/null || service docker start 2>/dev/null || true
+    elif command -v dnf >/dev/null 2>&1; then
+        dnf install -y docker
+        systemctl enable --now docker 2>/dev/null || true
+    elif command -v yum >/dev/null 2>&1; then
+        yum install -y docker
+        systemctl enable --now docker 2>/dev/null || true
+    elif command -v apk >/dev/null 2>&1; then
+        apk add --no-cache docker
+        rc-update add docker default 2>/dev/null || true
+        service docker start 2>/dev/null || true
+    else
+        error "无法识别当前系统，请手动安装 Docker。"
+        exit 1
+    fi
+}
+
 check_docker() {
-    command -v docker >/dev/null 2>&1 || { error "未安装 Docker"; exit 1; }
-    docker info >/dev/null 2>&1 || { error "Docker 未运行"; exit 1; }
+    if ! command -v docker >/dev/null 2>&1; then
+        echo
+        echo "未检测到 Docker。"
+        read -r -p "是否自动安装 Docker？[Y/n]：" answer
+        case "${answer:-Y}" in
+            n|N) error "未安装 Docker，脚本退出。"; exit 1 ;;
+            *) install_docker ;;
+        esac
+    fi
+
+    if ! docker info >/dev/null 2>&1; then
+        systemctl start docker 2>/dev/null || service docker start 2>/dev/null || true
+    fi
+
+    docker info >/dev/null 2>&1 || {
+        error "Docker 未运行，请手动启动 Docker 后重试。"
+        exit 1
+    }
 }
 
 prepare_dirs() {
@@ -119,3 +162,4 @@ run_menu() {
 
 check_docker
 run_menu
+
