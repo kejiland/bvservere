@@ -258,3 +258,72 @@ sudo bash install-bvservere.sh
 ```
 
 首次登录后请立即修改默认密码，不要在公开位置保存 Docker Hub 密码或访问令牌。
+
+## 十、短链接一键执行
+
+本脚本支持类似下面的方式：
+
+```bash
+bash <(curl -fsSL https://你的域名/install-bvservere.sh)
+```
+
+如果使用自己的短域名，例如 `bv.example.com`，可以将域名的 HTTPS 请求转发到 GitHub Raw：
+
+```bash
+bash <(curl -fsSL https://bv.example.com)
+```
+
+也可以使用短路径：
+
+```bash
+bash <(curl -fsSL https://bv.example.com/bv)
+```
+
+### 使用 Cloudflare Worker 做短链接
+
+可以创建一个 Cloudflare Worker，将访问 `/` 的请求转发到 GitHub Raw：
+
+```javascript
+export default {
+  async fetch(request) {
+    const target = "https://raw.githubusercontent.com/kejiland/bvservere/main/install-bvservere.sh";
+    return fetch(target, {
+      method: request.method,
+      headers: request.headers,
+      redirect: "follow"
+    });
+  }
+};
+```
+
+绑定域名后即可使用：
+
+```bash
+bash <(curl -fsSL https://你的短域名)
+```
+
+### 使用 Nginx 短路径
+
+如果你有自己的服务器和域名，可以配置：
+
+```nginx
+location = /bv {
+    proxy_pass https://raw.githubusercontent.com/kejiland/bvservere/main/install-bvservere.sh;
+    proxy_set_header Host raw.githubusercontent.com;
+}
+```
+
+然后执行：
+
+```bash
+bash <(curl -fsSL https://你的域名/bv)
+```
+
+### 注意事项
+
+- 短链接必须返回纯文本 Shell 脚本内容；
+- 必须使用 HTTPS；
+- 短链接服务需要支持重定向或代理返回；
+- 生产环境建议先下载并检查脚本；
+- 不要使用不可信的短链接执行脚本；
+- 如果脚本需要交互输入，使用 `bash <(curl ...)` 比 `curl ... | bash` 更适合。

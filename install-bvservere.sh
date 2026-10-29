@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
+set -Eeuo pipefail`n`n# 支持：bash <(curl -sL https://你的域名/install-bvservere.sh)
 
 APP_NAME="bvservere"
 IMAGE="${IMAGE:-99320/bvservere:5.1.17}"
@@ -197,6 +197,7 @@ run_menu() { while true; do show_menu; printf "请输入选项 [0-11]："; read 
 
 check_docker
 run_menu
+
 
 
 
