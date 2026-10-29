@@ -32,10 +32,13 @@ install_docker() {
 
 check_docker() {
     if ! command -v docker >/dev/null 2>&1; then
-        echo
-        echo "未检测到 Docker。"
+        clear 2>/dev/null || true
+        echo "======================================"
+        echo "       未检测到 Docker"
+        echo "======================================"
         echo "1. 自动安装 Docker"
         echo "2. 退出"
+        echo "======================================"
         while true; do
             read -r -p "请输入选项 [1-2]：" choice
             case "$choice" in
