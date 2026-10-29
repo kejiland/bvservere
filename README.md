@@ -6,7 +6,7 @@
 
 - Linux 服务器
 - `amd64/x86_64` 架构
-- 已安装并运行 Docker
+- 已安装 Docker；如果未安装，脚本会询问是否自动安装
 - 服务器可以访问 GitHub 和 Docker Hub
 - 使用 root 用户，或当前用户具有 Docker 操作权限
 
@@ -52,6 +52,23 @@ curl -fsSL https://raw.githubusercontent.com/kejiland/bvservere/main/install-bvs
 ```
 
 根据提示输入数字并按回车即可。
+如果服务器未安装 Docker，脚本会显示：
+
+```text
+未检测到 Docker。
+是否自动安装 Docker？[Y/n]：
+```
+
+直接按回车或输入 `Y`，脚本会根据系统的软件包管理器自动安装 Docker，并尝试启动 Docker 服务。
+
+当前支持常见的：
+
+- Debian / Ubuntu：`apt-get`
+- CentOS / RHEL 兼容系统：`yum`
+- Fedora / Rocky / AlmaLinux 等：`dnf`
+- Alpine Linux：`apk`
+
+如果输入 `n`，脚本会退出，不安装 Docker。
 
 ## 三、菜单功能
 
@@ -213,3 +230,4 @@ sudo bash install-bvservere.sh
 ```
 
 不要在公开位置保存 Docker Hub 密码或访问令牌。
+
