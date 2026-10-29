@@ -155,6 +155,36 @@ update_script() {
         return 1
     fi
 }
+configure_registry_mirror() {
+    check_docker
+    local config="/etc/docker/daemon.json"
+    local mirror="https://docker.m.daocloud.io"
+    echo "Docker 镜像加速配置"
+    echo "1. DaoCloud 公共加速地址"
+    echo "2. 手动输入加速地址"
+    echo "3. 取消"
+    printf "请输入选项 [1-3]："
+    read -r mirror_choice </dev/tty || return 1
+    case "$mirror_choice" in
+        1) mirror="https://docker.m.daocloud.io" ;;
+        2) printf "请输入镜像加速地址："; read -r mirror </dev/tty; [ -n "$mirror" ] || { error "地址不能为空"; return 1; } ;;
+        3) return 0 ;;
+        *) error "无效选项"; return 1 ;;
+    esac
+    mkdir -p /etc/docker
+    local backup="/etc/docker/daemon.json.bak.$(date +%Y%m%d%H%M%S)"
+    [ -f "$config" ] && cp "$config" "$backup"
+    cat > "$config" <<EOF
+{
+  "registry-mirrors": ["$mirror"]
+}
+EOF
+    systemctl daemon-reload 2>/dev/null || true
+    systemctl restart docker
+    info "Docker 镜像加速已配置：$mirror"
+    info "原配置备份：${backup:-无}"
+    docker info 2>/dev/null | grep -A5 -i "Registry Mirrors" || true
+}
 set_shortcut() {
     local shortcut
     printf "请输入快捷键名称（直接回车使用 b）："
@@ -162,11 +192,12 @@ set_shortcut() {
     shortcut="${shortcut:-b}"
     install_shortcut "$shortcut"
 }
-show_menu() { clear 2>/dev/null || true; echo "======================================"; echo "       bvservere 一键管理脚本"; echo "======================================"; echo "镜像：$IMAGE"; echo "数据目录：$DATA_DIR"; echo; echo "1. 安装 / 更新"; echo "2. 启动"; echo "3. 停止"; echo "4. 重启"; echo "5. 查看状态"; echo "6. 查看日志"; echo "7. 查看访问信息"; echo "8. 设置快捷键"; echo "9. 更新管理脚本"; echo "10. 删除容器（保留数据）"; echo "0. 退出"; echo; echo "快捷键：$SHORTCUT_KEY  启动/进入此管理脚本"; echo "======================================"; }
-run_menu() { while true; do show_menu; printf "请输入选项 [0-10]："; read -r choice </dev/tty || exit 1; echo; case "$choice" in 1) check_docker; install_app; install_shortcut;; 2) check_docker; exists && docker start "$APP_NAME" >/dev/null && info "启动成功" || error "容器不存在，请先选择 1 安装";; 3) check_docker; running && docker stop "$APP_NAME" >/dev/null || true; info "已停止";; 4) check_docker; exists && docker restart "$APP_NAME" >/dev/null && info "重启成功" || error "容器不存在，请先选择 1 安装";; 5) check_docker; docker ps -a --filter "name=^/${APP_NAME}$";; 6) check_docker; exists && docker logs -tf --tail 30 "$APP_NAME" || error "容器不存在";; 7) show_access_info; echo; printf "按回车键返回菜单..."; read -r _ </dev/tty;; 8) set_shortcut;; 9) update_script;; 10) check_docker; exists && docker rm -f "$APP_NAME" >/dev/null || true; info "容器已删除，数据仍保留在：$DATA_DIR";; 0) exit 0;; *) error "无效选项";; esac; if [ "$choice" != 7 ]; then echo; printf "按回车键返回菜单..."; read -r _ </dev/tty; fi; done; }
+show_menu() { clear 2>/dev/null || true; echo "======================================"; echo "       bvservere 一键管理脚本"; echo "======================================"; echo "镜像：$IMAGE"; echo "数据目录：$DATA_DIR"; echo; echo "1. 安装 / 更新"; echo "2. 配置 Docker 镜像加速"; echo "3. 启动"; echo "4. 停止"; echo "5. 重启"; echo "6. 查看状态"; echo "7. 查看日志"; echo "8. 查看访问信息"; echo "9. 设置快捷键"; echo "10. 更新管理脚本"; echo "11. 删除容器（保留数据）"; echo "0. 退出"; echo; echo "快捷键：$SHORTCUT_KEY  启动/进入此管理脚本"; echo "======================================"; }
+run_menu() { while true; do show_menu; printf "请输入选项 [0-11]："; read -r choice </dev/tty || exit 1; echo; case "$choice" in 1) check_docker; install_app; install_shortcut;; 2) configure_registry_mirror;; 3) check_docker; exists && docker start "$APP_NAME" >/dev/null && info "启动成功" || error "容器不存在，请先选择 1 安装";; 4) check_docker; running && docker stop "$APP_NAME" >/dev/null || true; info "已停止";; 5) check_docker; exists && docker restart "$APP_NAME" >/dev/null && info "重启成功" || error "容器不存在，请先选择 1 安装";; 6) check_docker; docker ps -a --filter "name=^/${APP_NAME}$";; 7) check_docker; exists && docker logs -tf --tail 30 "$APP_NAME" || error "容器不存在";; 8) show_access_info; echo; printf "按回车键返回菜单..."; read -r _ </dev/tty;; 9) set_shortcut;; 10) update_script;; 11) check_docker; exists && docker rm -f "$APP_NAME" >/dev/null || true; info "容器已删除，数据仍保留在：$DATA_DIR";; 0) exit 0;; *) error "无效选项";; esac; if [ "$choice" != 7 ]; then echo; printf "按回车键返回菜单..."; read -r _ </dev/tty; fi; done; }
 
 check_docker
 run_menu
+
 
 
 
