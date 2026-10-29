@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 APP_NAME="bvservere"
 IMAGE="${IMAGE:-99320/bvservere:5.1.17}"
-DATA_DIR="${DATA_DIR:-/opt/bvservere}"`nSHORTCUT_KEY="${SHORTCUT_KEY:-b}"
+DATA_DIR="${DATA_DIR:-/opt/bvservere}"\nSHORTCUT_KEY="${SHORTCUT_KEY:-b}"
 
 info() { echo "[INFO] $*"; }
 error() { echo "[ERROR] $*" >&2; }
@@ -131,6 +131,7 @@ run_menu() { while true; do show_menu; printf "请输入选项 [0-8]："; read -
 
 check_docker
 run_menu
+
 
 
 
