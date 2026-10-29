@@ -115,6 +115,7 @@ install_app() { pull_image; exists && docker rm -f "$APP_NAME" >/dev/null 2>&1 |
 
 install_shortcut() {
     local target="/usr/local/bin/bvservere"
+    local shortcut="/usr/local/bin/b"
     [ "$(id -u)" -eq 0 ] || { error "安装快捷键需要 root 权限，请使用 sudo 运行。"; return 1; }
     local source="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
     if [[ "$source" == /dev/fd/* || ! -f "$source" ]]; then
@@ -132,6 +133,7 @@ run_menu() { while true; do show_menu; printf "请输入选项 [0-8]："; read -
 
 check_docker
 run_menu
+
 
 
 
