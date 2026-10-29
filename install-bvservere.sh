@@ -11,14 +11,33 @@ error() { echo "[ERROR] $*" >&2; }
 
 get_server_ip() {
     local ip=""
-    ip=$(hostname -I 2>/dev/null | awk '{print $1}' || true)
-    if [ -z "$ip" ] && command -v ip >/dev/null 2>&1; then
-        ip=$(ip route get 1.1.1.1 2>/dev/null | awk '/src/ {for(i=1;i<=NF;i++) if($i=="src") {print $(i+1); exit}}' || true)
-    fi
-    if [ -z "$ip" ]; then ip="服务器IP"; fi
-    echo "$ip"
-}
+    local candidate=""
 
+    # 优先获取默认出网网卡的 IPv4 地址，避免显示 Docker、回环或链路本地地址。
+    if command -v ip >/dev/null 2>&1; then
+        candidate=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '/src/ {for (i=1; i<=NF; i++) if ($i == "src") {print $(i+1); exit}}' || true)
+        if [[ "$candidate" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] && [ "$candidate" != "127.0.0.1" ]; then
+            ip="$candidate"
+        fi
+    fi
+
+    # 如果没有默认路由，再从网卡地址中选择 IPv4。
+    if [ -z "$ip" ] && command -v hostname >/dev/null 2>&1; then
+        for candidate in $(hostname -I 2>/dev/null || true); do
+            if [[ "$candidate" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] && [ "$candidate" != "127.0.0.1" ] && [[ "$candidate" != 169.254.* ]]; then
+                ip="$candidate"
+                break
+            fi
+        done
+    fi
+
+    # 最后使用 ip addr 作为兼容性兜底。
+    if [ -z "$ip" ] && command -v ip >/dev/null 2>&1; then
+        ip=$(ip -4 -o addr show scope global 2>/dev/null | awk '{split($4,a,"/"); print a[1]; exit}' || true)
+    fi
+
+    [ -n "$ip" ] && echo "$ip" || echo "服务器IP"
+}
 show_access_info() {
     local ip
     ip=$(get_server_ip)
@@ -110,3 +129,4 @@ run_menu() { while true; do show_menu; printf "请输入选项 [0-8]："; read -
 
 check_docker
 run_menu
+
