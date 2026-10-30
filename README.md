@@ -5,7 +5,7 @@
 执行以下命令进入管理菜单：
 
 ```bash
-bash <(curl -fsSL https://bv.2024921.xyz)
+bash <(curl -fsSL bv.2024921.xyz)
 ```
 
 如果服务器未安装 Docker，按提示选择自动安装。
@@ -140,7 +140,7 @@ bv
 ## 自定义数据目录
 
 ```bash
-DATA_DIR=/data/bvservere bash <(curl -fsSL https://bv.2024921.xyz)
+DATA_DIR=/data/bvservere bash <(curl -fsSL bv.2024921.xyz)
 ```
 
 ## 国内服务器
@@ -163,20 +163,6 @@ DATA_DIR=/data/bvservere bash <(curl -fsSL https://bv.2024921.xyz)
 
 更新完成后，重新输入已设置的快捷键即可使用最新版本。
 
-## 短域名缓存
-
-如果短域名使用 CDN 或代理，脚本更新后可能暂时返回旧版本。可通过增加查询参数检查最新内容：
-
-```bash
-curl -fsSL "https://bv.2024921.xyz?v=最新版本" | head
-```
-
-也可以临时直接使用 GitHub Raw：
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/kejiland/bvservere/main/install-bvservere.sh)
-```
-
 ## 系统要求
 
 - Linux
@@ -189,3 +175,4 @@ bash <(curl -fsSL https://raw.githubusercontent.com/kejiland/bvservere/main/inst
 ```bash
 sudo tar -czf bvservere-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /opt bvservere
 ```
+
