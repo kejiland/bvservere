@@ -327,3 +327,34 @@ bash <(curl -fsSL https://你的域名/bv)
 - 生产环境建议先下载并检查脚本；
 - 不要使用不可信的短链接执行脚本；
 - 如果脚本需要交互输入，使用 `bash <(curl ...)` 比 `curl ... | bash` 更适合。
+
+## 十一、短域名缓存说明
+
+项目支持使用短域名执行一键脚本：
+
+```bash
+bash <(curl -fsSL https://bv.2024921.xyz)
+```
+
+如果短域名使用了 CDN、反向代理或缓存服务，GitHub 更新脚本后，短域名可能暂时返回旧版本。这时可能看到旧脚本内容或旧报错。
+
+可以先检查短域名返回的内容：
+
+```bash
+curl -fsSL "https://bv.2024921.xyz?v=最新提交号" | head
+```
+
+如果仍然看到旧内容，说明缓存尚未刷新。可以：
+
+1. 清理 CDN 或代理缓存；
+2. 重新发布短链接代理配置；
+3. 等待缓存自动过期；
+4. 暂时直接使用 GitHub Raw 地址。
+
+GitHub Raw 临时执行方式：
+
+```bash
+bash <(curl -fsSL "https://raw.githubusercontent.com/kejiland/bvservere/main/install-bvservere.sh?v=最新提交号")
+```
+
+短域名缓存问题不代表 GitHub 脚本没有更新。确认短域名内容和 GitHub Raw 内容一致后，再继续使用短域名执行。
