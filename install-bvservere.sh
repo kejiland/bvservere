@@ -36,13 +36,13 @@ show_access_info() {
     echo "服务器 IP：$ip"
     echo
     echo "【网页客户端】"
-    echo "访问地址：https://$ip:9780
+    echo "访问地址：http://$ip:9780
 备用访问地址：https://$ip:9781"
     echo "账号：admin"
     echo "密码：123456"
     echo
     echo "【运管中心】"
-    echo "访问地址：https://$ip:9780
+    echo "访问地址：http://$ip:9780
 备用访问地址：https://$ip:9781/center/"
     echo "账号：superadmin"
     echo "密码：123456"
@@ -62,13 +62,13 @@ bvservere 访问信息
 服务器 IP：$ip
 
 网页客户端：
-访问地址：https://$ip:9780
+访问地址：http://$ip:9780
 备用访问地址：https://$ip:9781
 账号：admin
 密码：123456
 
 运管中心：
-访问地址：https://$ip:9780
+访问地址：http://$ip:9780
 备用访问地址：https://$ip:9781/center/
 账号：superadmin
 密码：123456
@@ -201,6 +201,7 @@ run_menu() { while true; do show_menu; printf "请输入选项 [0-11]："; read 
 
 check_docker
 run_menu
+
 
 
 
